@@ -7,6 +7,8 @@ Este projeto permite clonar vozes usando o modelo `Qwen3-TTS-12Hz-1.7B-Base`, co
 - `voices/`: Pasta para armazenar os áudios de referência (ignorada pelo Git).
 - `output/`: Pasta onde os áudios clonados são salvos (ignorada pelo Git).
 - `pyproject.toml`: Arquivo de configuração de dependências do projeto (UV).
+- `.env`: Arquivo de configuração de caminhos (não comitado).
+- `.env.example`: Exemplo de configuração de ambiente.
 - `.gitignore`: Arquivo de exclusão do Git.
 - `clone_qwen3_tts.py`: Script principal Python.
 - `run_voice_cloning.ps1`: Script PowerShell para clonagem em Português.
@@ -41,6 +43,18 @@ Este projeto permite clonar vozes usando o modelo `Qwen3-TTS-12Hz-1.7B-Base`, co
 
     ```bash
     uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+    ```
+
+4.  **Configure o arquivo `.env`:**
+    Copie o arquivo de exemplo e ajuste os caminhos se necessário.
+    ```bash
+    cp .env.example .env
+    ```
+    Conteúdo padrão do `.env`:
+    ```ini
+    REF_AUDIO_PT=voices/heverton.wav
+    REF_AUDIO_ES=voices/ivan.ogg
+    OUTPUT_DIR=output
     ```
 
 ## Uso

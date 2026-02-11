@@ -3,11 +3,25 @@
 # Configurar encoding para UTF-8
 $OutputEncoding = [System.Console]::InputEncoding = [System.Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Carregar variáveis de ambiente do arquivo .env
+$EnvFilePath = Join-Path $PSScriptRoot ".env"
+if (Test-Path $EnvFilePath) {
+    Get-Content $EnvFilePath | Where-Object { $_ -match '=' -and -not ($_ -match '^#') -and -not ([string]::IsNullOrWhiteSpace($_)) } | ForEach-Object {
+        $key, $value = $_.split('=', 2)
+        [Environment]::SetEnvironmentVariable($key.Trim(), $value.Trim(), "Process")
+    }
+    Write-Host "Carregado configurações de $EnvFilePath"
+}
+
 # Configuração de caminhos e nomes
-$RefAudioPath = "c:\repo\voice-cloner\voices\ivan.ogg"
+# Tenta pegar do ambiente, senão usa padrão
+$RefAudioPathRelative = if ($env:REF_AUDIO_ES) { $env:REF_AUDIO_ES } else { "voices/ivan.ogg" }
+$RefAudioPath = Join-Path $PSScriptRoot $RefAudioPathRelative
+
+$OutputDirRelative = if ($env:OUTPUT_DIR) { $env:OUTPUT_DIR } else { "output" }
+$OutputDir = Join-Path $PSScriptRoot $OutputDirRelative
+
 $RefName = [System.IO.Path]::GetFileNameWithoutExtension($RefAudioPath)
-$Timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-$OutputDir = "c:\repo\voice-cloner\output"
 $OutputFile = Join-Path -Path $OutputDir -ChildPath "${RefName}_${Timestamp}.mp3"
 
 # Criar diretório de saída se não existir
