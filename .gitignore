@@ -1,0 +1,19 @@
+# Ambientes virtuais
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Saídas e dados
+output/
+voices/
+
+# Logs e temporários
+*.log
+*.tmp
+*.bak

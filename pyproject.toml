@@ -1,0 +1,21 @@
+[project]
+name = "voice-cloner"
+version = "0.1.0"
+description = "Clone vozes usando Qwen3-TTS e exporte para MP3."
+readme = "README.md"
+requires-python = ">=3.9,<3.10"
+dependencies = [
+    "qwen-tts",
+    "modelscope",
+    "huggingface_hub[cli]",
+    "scipy",
+    "soundfile",
+    "numpy",
+    "transformers",
+    "accelerate",
+    "hf_xet",
+    "pydub",
+]
+
+[tool.uv]
+# Configurações adicionais do UV se necessário
