@@ -14,6 +14,7 @@ import soundfile as sf
 SUPPORTED_LANGUAGES = ("Portuguese", "English", "Spanish")
 AUDIO_EXTENSIONS = {".wav", ".mp3", ".ogg", ".flac"}
 NATIVE_VOICE_PREFIX = "cv_"
+OMNIVOICE_REF_MAX_SECONDS = 20.0
 VOICE_REF_TEXT = {
     "diego": os.getenv("REF_TEXT_DIEGO", ""),
     "heverton": os.getenv("REF_TEXT_HEVERTON", ""),
@@ -276,6 +277,45 @@ class TTSService:
             return env_val
         return VOICE_REF_TEXT.get(voice_id, "")
 
+    def _prepare_reference(self, ref_audio: Path) -> str:
+        # OmniVoice hard-fails when the reference clip outlasts the transcript
+        # window (20s) — see create_voice_clone_prompt in VoiceStudio. Rather
+        # than 422, trim to the leading 20s (where the supplied transcript
+        # normally starts) and cache the result. ponytail: fixed leading window;
+        # switch to speech-aware selection if a transcript ever spans a whole clip.
+        try:
+            info = sf.info(ref_audio)
+        except Exception:
+            info = None
+        if info is not None and info.frames / info.samplerate <= OMNIVOICE_REF_MAX_SECONDS:
+            return str(ref_audio)
+
+        cache_dir = self.output_dir / "_refs"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        target = cache_dir / f"{ref_audio.stem}.wav"
+        try:
+            if target.is_file() and target.stat().st_mtime >= ref_audio.stat().st_mtime:
+                return str(target)
+            if info is not None:
+                frames = int(OMNIVOICE_REF_MAX_SECONDS * info.samplerate)
+                data, samplerate = sf.read(ref_audio, frames=frames, dtype="float32", always_2d=False)
+            else:
+                from pydub import AudioSegment
+
+                clip = AudioSegment.from_file(ref_audio)[: int(OMNIVOICE_REF_MAX_SECONDS * 1000)]
+                data, samplerate = np.array(clip.get_array_of_samples()), clip.frame_rate
+            sf.write(target, data, samplerate)
+        except Exception:
+            LOG.warning("ref_audio_trim_failed voice=%s fallback=original", ref_audio.stem)
+            return str(ref_audio)
+        LOG.info(
+            "ref_audio_trimmed voice=%s src_s=%s -> %.0fs",
+            ref_audio.stem,
+            f"{info.frames / info.samplerate:.1f}" if info is not None else "unknown",
+            OMNIVOICE_REF_MAX_SECONDS,
+        )
+        return str(target)
+
     def _generate_clone(self, voice_id: str, text: str, language: str, **params: Any) -> Path:
         ref_audio = self.catalog.resolve_voice(voice_id)
         ref_text = self._get_ref_text(voice_id)
@@ -285,7 +325,7 @@ class TTSService:
             audios = self._clone_model.generate(
                 text=text.strip(),
                 language=language,
-                ref_audio=str(ref_audio),
+                ref_audio=self._prepare_reference(ref_audio),
                 ref_text=ref_text or None,
                 speed=speed,
                 denoise=True,

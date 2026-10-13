@@ -45,3 +45,27 @@ def test_omnivoice_synthesize_mock_model(tmp_path: Path):
     assert call_kwargs["text"] == "Olá Garagem do Código!"
     assert call_kwargs["language"] == "Portuguese"
     assert call_kwargs["ref_text"] == "texto de referencia teste"
+
+
+def test_long_reference_is_trimmed_to_window(tmp_path: Path):
+    voices_dir = tmp_path / "voices"
+    output_dir = tmp_path / "output"
+    voices_dir.mkdir()
+    output_dir.mkdir()
+
+    sf.write(voices_dir / "diego.wav", np.zeros(24000 * 30, dtype="float32"), 24000)
+    (voices_dir / "diego.txt").write_text("texto de referencia teste", encoding="utf-8")
+
+    mock_model = MagicMock()
+    mock_model.sampling_rate = 24000
+    mock_model.generate.return_value = [torch.zeros((1, 24000))]
+
+    service = TTSService(voices_dir, output_dir, model=mock_model, device="cpu")
+    service.engine = "omnivoice"
+
+    service.synthesize("diego", "Olá", "Portuguese")
+
+    ref_arg = mock_model.generate.call_args.kwargs["ref_audio"]
+    assert ref_arg != str(voices_dir / "diego.wav")
+    assert sf.info(ref_arg).duration <= 20.5
+    assert mock_model.generate.call_args.kwargs["ref_text"] == "texto de referencia teste"

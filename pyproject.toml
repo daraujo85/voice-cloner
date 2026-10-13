@@ -30,6 +30,8 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest",
+    # FastAPI TestClient (tests/test_api.py). Was a transitive dep of qwen-tts.
+    "httpx",
 ]
 
 [tool.pytest.ini_options]
