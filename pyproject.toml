@@ -5,13 +5,18 @@ description = "Clone vozes usando Qwen3-TTS e exporte para MP3."
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
 dependencies = [
-    "qwen-tts",
+    # qwen-tts removed: it hard-pins transformers==4.57.3, which breaks
+    # OmniVoice (VoiceStudio requires transformers>=5.10.0). The container
+    # runs TTS_ENGINE=omnivoice, so the qwen path is unused there. Install
+    # qwen-tts manually in a separate env if you need clone_qwen3_tts.py.
     "modelscope",
-    "huggingface_hub[cli]",
+    "huggingface_hub",
     "scipy",
     "soundfile",
     "numpy",
-    "transformers",
+    # VoiceStudio/OmniVoice requires transformers>=5.10.0; 4.x breaks the
+    # qwen2 tokenizer on the model's `extra_special_tokens` (list) config.
+    "transformers>=5.10.0",
     "accelerate",
     "torchaudio",
     "hf_xet",
