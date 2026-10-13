@@ -1,0 +1,32 @@
+services:
+  local-tts:
+    build: .
+    ports:
+      - "8787:8787"
+    env_file:
+      - .env
+    environment:
+      TTS_DEVICE: cuda
+      TTS_ENGINE: omnivoice
+      TTS_MODEL_ID: k2-fsa/OmniVoice
+      VOICESTUDIO_PATH: /app/VoiceStudio
+      TTS_FLASH_ATTENTION: "false"
+      TTS_VOICES_DIR: /app/voices
+      TTS_OUTPUT_DIR: /app/output
+      TTS_ENABLE_NATIVE: "false"
+    volumes:
+      - ./voices:/app/voices:ro
+      - ./output:/app/output
+      - ../VoiceStudio:/app/VoiceStudio:ro
+      - ~/.cache/huggingface:/root/.cache/huggingface
+      # Dev: monta o código fonte para refletir mudanças sem rebuild
+      - ./api.py:/app/api.py:ro
+      - ./tts_service.py:/app/tts_service.py:ro
+      - ./clone_omnivoice.py:/app/clone_omnivoice.py:ro
+    gpus: all
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

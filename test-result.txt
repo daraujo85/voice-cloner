@@ -1,0 +1,49 @@
+   Building llvmlite==0.36.0
+   Building numba==0.53.1
+   Building sox==1.5.0
+Downloading torch (108.5MiB)
+Downloading scipy (34.7MiB)
+Downloading pandas (9.4MiB)
+Downloading gradio (23.1MiB)
+Downloading transformers (11.4MiB)
+Downloading onnxruntime (11.9MiB)
+Downloading scikit-learn (7.7MiB)
+Downloading modelscope (5.8MiB)
+Downloading pillow (6.7MiB)
+Downloading numpy (12.0MiB)
+  × Failed to build `numba==0.53.1`
+  ├─▶ The build backend returned an error
+  ╰─▶ Call to `setuptools.build_meta:__legacy__.build_wheel` failed (exit
+      code: 1)
+
+      [stderr]
+      Traceback (most recent call last):
+        File "<string>", line 14, in <module>
+        File
+      "C:\Users\usuario\AppData\Local\uv\cache\builds-v0\.tmpYgakkf\Lib\site-packages\setuptools\build_meta.py",
+      line 333, in get_requires_for_build_wheel
+          return self._get_build_requires(config_settings, requirements=[])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        File
+      "C:\Users\usuario\AppData\Local\uv\cache\builds-v0\.tmpYgakkf\Lib\site-packages\setuptools\build_meta.py",
+      line 301, in _get_build_requires
+          self.run_setup()
+        File
+      "C:\Users\usuario\AppData\Local\uv\cache\builds-v0\.tmpYgakkf\Lib\site-packages\setuptools\build_meta.py",
+      line 520, in run_setup
+          super().run_setup(setup_script=setup_script)
+        File
+      "C:\Users\usuario\AppData\Local\uv\cache\builds-v0\.tmpYgakkf\Lib\site-packages\setuptools\build_meta.py",
+      line 317, in run_setup
+          exec(code, locals())  # noqa: S102 # exec is intentional here
+          ^^^^^^^^^^^^^^^^^^^^
+        File "<string>", line 50, in <module>
+        File "<string>", line 47, in _guard_py_ver
+      RuntimeError: Cannot install on Python version 3.11.12; only versions
+      >=3.6,<3.10 are supported.
+
+      hint: This usually indicates a problem with the package or the build
+      environment.
+  help: `numba` (v0.53.1) was included because `voice-cloner` (v0.1.0) depends
+        on `qwen-tts` (v0.1.1) which depends on `librosa` (v0.11.0) which
+        depends on `numba`

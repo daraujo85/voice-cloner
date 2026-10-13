@@ -1,0 +1,12 @@
+{
+  "title": "tools.py — customer-support-lab",
+  "repo": "customer-support-lab",
+  "file": "app/tools.py",
+  "lang": "python",
+  "explorer": ["README.md", "app", "app/tools.py", "tests", "tests/test_tools.py"],
+  "active": "app/tools.py",
+  "base": "from collections.abc import Callable\n\n\ndef register_tool(name: str, fn: Callable) -> None:\n    tools[name] = fn\n",
+  "typed": "\n\ndef list_tools() -> list[str]:\n    return sorted(tools)\n",
+  "startDelayMs": 700,
+  "holdMs": 1800
+}

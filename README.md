@@ -16,88 +16,97 @@ Este projeto permite clonar vozes usando o modelo `Qwen3-TTS-12Hz-1.7B-Base`, co
 
 ## Pré-requisitos
 
-- **Python 3.9+**
+- **Python 3.10+**
 - **UV** (Gerenciador de projetos Python moderno e rápido).
 - **FFmpeg**: Necessário para suporte a MP3 e conversão de formatos de áudio.
-  - No Windows: `winget install ffmpeg` ou baixe do site oficial e adicione ao PATH.
 - **GPU NVIDIA** (Recomendado): Com drivers CUDA instalados para melhor performance.
 
 ## Instalação
 
-1.  **Clone o repositório:**
-    ```bash
-    git clone <url-do-repositorio>
-    cd voice-cloner
-    ```
+1. Clone o repositório e entre na pasta:
 
-2.  **Crie o ambiente e instale as dependências com UV:**
-    O projeto já está configurado com `pyproject.toml`.
+   ```bash
+   git clone <url-do-repositorio>
+   cd voice-cloner
+   ```
 
-    ```bash
-    # Cria o venv e instala as dependências básicas
-    uv sync
-    ```
+2. Instale as dependências com UV:
 
-3.  **Instale PyTorch com suporte a CUDA (Importante):**
-    O `uv` pode instalar a versão correta do PyTorch. Ajuste conforme sua versão do CUDA (ex: cu121 para CUDA 12.1):
+   ```bash
+   uv sync
+   ```
 
-    ```bash
-    uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
-    ```
+3. Em ambiente NVIDIA, instale PyTorch com CUDA compatível quando necessário:
 
-4.  **Configure o arquivo `.env`:**
-    Copie o arquivo de exemplo e ajuste os caminhos se necessário.
-    ```bash
-    cp .env.example .env
-    ```
-    Conteúdo padrão do `.env`:
-    ```ini
-    REF_AUDIO_PT=voices/heverton.wav
-    REF_AUDIO_ES=voices/ivan.ogg
-    OUTPUT_DIR=output
-    ```
+   ```bash
+   uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   ```
+
+4. Configure `.env` a partir de `.env.example`.
 
 ## Uso
 
-### Scripts de Automação (Recomendado)
+### Scripts de Automação
 
-Use os scripts PowerShell para facilitar a execução. Eles configuram automaticamente o encoding, caminhos e geram nomes de arquivos com data/hora.
+```powershell
+.\run_voice_cloning.ps1
+.\run_voice_cloning_es.ps1
+```
 
-1.  **Português (Texto de Livro):**
-    Edite o script para apontar para seu áudio de referência em `voices/`.
-    ```powershell
-    .\run_voice_cloning.ps1
-    ```
+Os resultados são salvos em `output/` em formato MP3.
 
-2.  **Espanhol (Hino do Real Madrid):**
-    ```powershell
-    .\run_voice_cloning_es.ps1
-    ```
-
-Os resultados serão salvos na pasta `output/` em formato MP3 (320kbps).
-
-### Uso Manual (Python)
-
-Você pode chamar o script Python diretamente via `uv run`:
+### Uso Manual
 
 ```bash
-uv run clone_qwen3_tts.py ^
-  --ref-audio "voices/sua_voz.ogg" ^
-  --text "Texto para falar" ^
-  --language Portuguese ^
-  --out "output/resultado.mp3" ^
+uv run clone_qwen3_tts.py \
+  --ref-audio "voices/sua_voz.ogg" \
+  --ref-text "Transcrição exata da referência" \
+  --text "Texto para falar" \
+  --language Portuguese \
+  --out "output/resultado.mp3" \
   --temperature 0.7
 ```
 
-**Parâmetros Principais:**
-- `--ref-audio`: Caminho para o áudio de voz (WAV, MP3, OGG, etc.).
-- `--text`: Texto a ser falado.
-- `--language`: Idioma (Portuguese, Spanish, English, etc.).
-- `--out`: Arquivo de saída (use .mp3 para MP3).
-- `--x-vector-only`: Usa apenas o timbre da voz (ignora o conteúdo do áudio de referência).
-- `--temperature`, `--top-p`: Ajustes de criatividade e qualidade da voz.
+Parâmetros principais: `--ref-audio`, `--ref-text`, `--text`, `--language`, `--out`, `--x-vector-only`, `--temperature`, `--top-p` e `--repetition-penalty`.
 
-## Notas
+## API local FastAPI
 
-- **Formatos de Áudio**: O sistema aceita automaticamente OGG, MP3 e outros formatos como referência, convertendo temporariamente para WAV.
-- **Acentos**: Para melhores resultados, prefira textos sem acentos se notar falhas na pronúncia.
+A API expõe o modelo somente na LAN, com token Bearer nos endpoints protegidos. No Duck Server:
+
+```bash
+docker compose build
+docker compose up -d
+curl http://localhost:8787/health
+curl -H "Authorization: Bearer $TTS_API_TOKEN" http://localhost:8787/v1/voices
+```
+
+Endpoints: `GET /health`, `GET /v1/voices`, `GET /v1/languages`, `POST /v1/tts` e `POST /v1/tts/segments`. A geração é serializada para proteger a VRAM.
+
+Para texto misto, teste primeiro uma chamada única. Se a troca de idioma soar estranha, envie segmentos explícitos; a API gera cada trecho no idioma correto e concatena os áudios:
+
+```json
+{
+  "voice_id": "diego",
+  "segments": [
+    {"text": "Esta é uma frase em português.", "language": "Portuguese"},
+    {"text": "This part is generated in English.", "language": "English"}
+  ]
+}
+```
+
+Use `POST /v1/tts/segments` para o teste controlado. A junção acontece localmente, sem MiniMax. A skill `local-tts` verifica `/health` antes de listar ou gerar e não usa fallback MiniMax.
+
+ICL é usado quando `REF_TEXT_<VOICE_ID>` contém a transcrição da referência. Sem transcrição, o serviço usa x-vector-only. Idiomas iniciais: `Portuguese`, `English`, `Spanish`.
+
+A máquina validada tem NVIDIA RTX 3060 com 12 GB de VRAM. Não publique essa API via Cloudflare; restrinja a porta 8787 à LAN.
+
+## Desenvolvimento
+
+```bash
+uv sync
+uv run pytest tests -q
+```
+
+Os testes sem GPU cobrem API, autenticação, catálogo e path traversal. Smoke test de síntese deve rodar no Duck Server com Docker e CUDA.
+
+Pigarro, risada e suspiro são experimentos: o modelo Base pode interpretar marcadores como texto literal. Gere áudio local primeiro; compare com MiniMax somente após validar inteligibilidade e timbre. Vídeos publicados precisam de VTT e rollback da mídia anterior.

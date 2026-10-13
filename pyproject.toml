@@ -3,7 +3,7 @@ name = "voice-cloner"
 version = "0.1.0"
 description = "Clone vozes usando Qwen3-TTS e exporte para MP3."
 readme = "README.md"
-requires-python = ">=3.9,<3.10"
+requires-python = ">=3.10,<3.14"
 dependencies = [
     "qwen-tts",
     "modelscope",
@@ -13,9 +13,22 @@ dependencies = [
     "numpy",
     "transformers",
     "accelerate",
+    "torchaudio",
     "hf_xet",
     "pydub",
+    "fastapi",
+    "uvicorn[standard]",
+    "numba>=0.61.0",
+    "llvmlite>=0.44.0",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
 [tool.uv]
-# Configurações adicionais do UV se necessário
+package = false
